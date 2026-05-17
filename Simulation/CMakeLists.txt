@@ -8,9 +8,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(NpcSimulation
     main.cpp
+    BenchmarkCSVExporter.cpp
     Agent.cpp
     World.cpp
     Simulation.cpp
     SequentialScheduler.cpp
     ThreadPoolScheduler.cpp
+    WorkStealingScheduler.cpp
 )

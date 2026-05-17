@@ -1,5 +1,6 @@
 #pragma once
 
+#include "BenchmarkTypes.h"
 #include "IScheduler.h"
 #include "World.h"
 
@@ -8,14 +9,6 @@
 
 using std::mt19937;
 using std::size_t;
-
-// Aggregated timing data for a benchmark run.
-struct BenchmarkResult
-{
-    double averageFrameTimeMs;
-    double minFrameTimeMs;
-    double maxFrameTimeMs;
-};
 
 // Coordinates the world and owns the simulation loop.
 class Simulation

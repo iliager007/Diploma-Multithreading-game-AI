@@ -109,7 +109,9 @@ BenchmarkResult Simulation::runBenchmark(int frameCount)
     return {
         totalMilliseconds / static_cast<double>(measuredFrames),
         minMilliseconds,
-        maxMilliseconds
+        maxMilliseconds,
+        0.0,
+        0.0
     };
 }
 
