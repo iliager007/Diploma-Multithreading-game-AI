@@ -1,0 +1,151 @@
+Interaction snapshot analysis
+=============================
+Rows: 135
+Agents: [10000, 50000, 100000]
+PerceptionRadius: [2, 5, 10]
+GrainSize: [64, 256, 1024]
+Schedulers: ['Sequential', 'ThreadPool', 'WorkStealing']
+
+Speedup by N (mean/max):
+ Agents    Scheduler     mean      max
+  10000   ThreadPool 1.165576 1.801736
+  10000 WorkStealing 1.200292 1.820025
+  50000   ThreadPool 2.132355 3.203631
+  50000 WorkStealing 2.099544 3.122498
+ 100000   ThreadPool 2.659658 4.189896
+ 100000 WorkStealing 2.666100 4.050704
+
+Payoff by N, PerceptionRadius and Scheduler:
+ Agents  PerceptionRadius    Scheduler  Configs  PaysOff  MaxSpeedup
+  10000                 2   ThreadPool        6        0    0.939831
+  10000                 2 WorkStealing        6        0    0.934457
+  10000                 5   ThreadPool        6        3    1.081120
+  10000                 5 WorkStealing        6        4    1.090900
+  10000                10   ThreadPool        6        6    1.801736
+  10000                10 WorkStealing        6        6    1.820025
+  50000                 2   ThreadPool        6        6    1.612713
+  50000                 2 WorkStealing        6        6    1.527176
+  50000                 5   ThreadPool        6        6    2.688578
+  50000                 5 WorkStealing        6        6    2.718390
+  50000                10   ThreadPool        6        6    3.203631
+  50000                10 WorkStealing        6        6    3.122498
+ 100000                 2   ThreadPool        6        6    2.177972
+ 100000                 2 WorkStealing        6        6    2.121551
+ 100000                 5   ThreadPool        6        6    3.099499
+ 100000                 5 WorkStealing        6        6    3.182030
+ 100000                10   ThreadPool        6        6    4.189896
+ 100000                10 WorkStealing        6        6    4.050704
+
+Speedup by PerceptionRadius (mean/max):
+ PerceptionRadius    Scheduler     mean      max
+                2   ThreadPool 1.393229 2.177972
+                2 WorkStealing 1.373470 2.121551
+                5   ThreadPool 1.968200 3.099499
+                5 WorkStealing 1.993870 3.182030
+               10   ThreadPool 2.596160 4.189896
+               10 WorkStealing 2.598596 4.050704
+
+AvgFrameMs by PerceptionRadius and Scheduler:
+ PerceptionRadius    Scheduler  AvgFrameMs
+                2   Sequential   23.317609
+                2   ThreadPool   14.009230
+                2 WorkStealing   14.311473
+                5   Sequential   29.405818
+                5   ThreadPool   12.376818
+                5 WorkStealing   12.165331
+               10   Sequential   45.949622
+               10   ThreadPool   14.963838
+               10 WorkStealing   15.012125
+
+AvgFrameMs by GrainSize, Scheduler and Threads:
+ GrainSize    Scheduler  Threads  AvgFrameMs
+        64   ThreadPool        4   15.470443
+        64   ThreadPool        8   12.249415
+        64 WorkStealing        4   14.816210
+        64 WorkStealing        8   12.285299
+       256   ThreadPool        4   15.225819
+       256   ThreadPool        8   12.254580
+       256 WorkStealing        4   15.448195
+       256 WorkStealing        8   12.584191
+      1024   ThreadPool        4   15.137578
+      1024   ThreadPool        8   12.361935
+      1024 WorkStealing        4   15.273399
+      1024 WorkStealing        8   12.570562
+
+ThreadPool vs WorkStealing:
+pairs=54
+ThreadPool wins=26
+WorkStealing wins=28
+equal=0
+mean TP/WS ratio=1.004310
+median TP/WS ratio=1.000798
+max WorkStealing gain=1.191727
+max ThreadPool gain=1.178145
+
+Speedup 4->8:
+   Scheduler     mean   median      min      max
+  ThreadPool 1.202911 1.179981 1.009535 1.503658
+WorkStealing 1.177260 1.147476 1.012016 1.398099
+
+Best grainSize counts among parallel configurations:
+   Scheduler  GrainSize  Wins
+  ThreadPool         64     7
+  ThreadPool        256     6
+  ThreadPool       1024     5
+WorkStealing         64    10
+WorkStealing        256     7
+WorkStealing       1024     1
+
+Frame range ratio by PerceptionRadius and Scheduler:
+ PerceptionRadius    Scheduler  FrameRangeRatio
+                2   Sequential         0.403309
+                2   ThreadPool         0.615359
+                2 WorkStealing         0.773752
+                5   Sequential         0.642528
+                5   ThreadPool         0.524858
+                5 WorkStealing         0.606174
+               10   Sequential         0.310903
+               10   ThreadPool         0.475898
+               10 WorkStealing         0.433322
+
+Frame range ratio by GrainSize and Scheduler:
+ GrainSize    Scheduler  FrameRangeRatio
+        64   Sequential         0.496610
+        64   ThreadPool         0.630594
+        64 WorkStealing         0.463626
+       256   Sequential         0.504158
+       256   ThreadPool         0.590990
+       256 WorkStealing         0.638762
+      1024   Sequential         0.355972
+      1024   ThreadPool         0.394532
+      1024 WorkStealing         0.710860
+
+AvgFrameMs winner by PerceptionRadius:
+ PerceptionRadius    AvgWinner  Wins
+                2   ThreadPool    10
+                2 WorkStealing     8
+                5   ThreadPool     6
+                5 WorkStealing    12
+               10   ThreadPool    10
+               10 WorkStealing     8
+
+Better MaxFrameMs in pairwise comparison:
+WorstFrameWinner
+ThreadPool      28
+WorkStealing    26
+
+Best by N:
+ Agents    Scheduler  Threads  GrainSize  PerceptionRadius  AvgFrameMs  Speedup
+  10000 WorkStealing        8        256                10    1.939468 1.820025
+  50000 WorkStealing        8         64                 5    9.479257 2.486289
+ 100000   ThreadPool        8        256                 5   20.183207 3.094689
+
+Best by PerceptionRadius:
+ PerceptionRadius    Scheduler  Threads  Agents  GrainSize  AvgFrameMs  Speedup
+                2   Sequential        1   10000         64    3.173568 1.000000
+                5 WorkStealing        8   10000        256    2.229153 1.090900
+               10 WorkStealing        8   10000        256    1.939468 1.820025
+
+Global best:
+ Agents  PerceptionRadius    Scheduler  Threads  GrainSize  AvgFrameMs  Speedup
+  10000                10 WorkStealing        8        256    1.939468 1.820025

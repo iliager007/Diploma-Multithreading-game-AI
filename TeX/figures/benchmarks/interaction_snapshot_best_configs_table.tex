@@ -1,0 +1,21 @@
+\begin{table}[ht]
+\centering
+\scriptsize
+\caption{Лучшие конфигурации режима \texttt{SnapshotNeighbors}}
+\label{tab:interaction-snapshot-best}
+\begin{tabularx}{\textwidth}{|l|r|r|r|r|r|>{\raggedright\arraybackslash}X|r|r|}
+\hline
+Срез & Знач. & $N$ & $R$ & $g$ & $p$ & Планировщик & Avg, мс & $S$ \\
+\hline
+$N$ & 10000 & 10000 & 10 & 256 & 8 & \texttt{WorkStealing} & 1{,}94 & 1{,}82 \\
+$N$ & 50000 & 50000 & 5 & 64 & 8 & \texttt{WorkStealing} & 9{,}48 & 2{,}49 \\
+$N$ & 100000 & 100000 & 5 & 256 & 8 & \texttt{ThreadPool} & 20{,}18 & 3{,}09 \\
+\hline
+$R$ & 2 & 10000 & 2 & 64 & 1 & \texttt{Sequential} & 3{,}17 & 1{,}00 \\
+$R$ & 5 & 10000 & 5 & 256 & 8 & \texttt{WorkStealing} & 2{,}23 & 1{,}09 \\
+$R$ & 10 & 10000 & 10 & 256 & 8 & \texttt{WorkStealing} & 1{,}94 & 1{,}82 \\
+\hline
+Глобально & -- & 10000 & 10 & 256 & 8 & \texttt{WorkStealing} & 1{,}94 & 1{,}82 \\
+\hline
+\end{tabularx}
+\end{table}

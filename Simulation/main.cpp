@@ -69,6 +69,38 @@ void appendParallelConfigs(
     }
 }
 
+void appendInteractionSnapshotConfig(
+    vector<BenchmarkConfig>& configs,
+    const string& schedulerName,
+    size_t workerCount,
+    size_t agentCount,
+    size_t grainSize,
+    float perceptionRadius
+)
+{
+    constexpr float heavyRatio = 0.0f;
+    constexpr int heavyIterations = 0;
+    constexpr int benchmarkFrames = 100;
+    constexpr float avoidanceStrength = 1.0f;
+    constexpr float densitySlowdown = 0.05f;
+
+    BenchmarkConfig config;
+    config.schedulerName = schedulerName;
+    config.agentCount = agentCount;
+    config.workerCount = workerCount;
+    config.grainSize = grainSize;
+    config.heavyAgentRatio = heavyRatio;
+    config.heavyWorkIterations = heavyIterations;
+    config.benchmarkFrames = benchmarkFrames;
+    config.suiteName = "interaction_snapshot";
+    config.interactionMode = InteractionMode::SnapshotNeighbors;
+    config.perceptionRadius = perceptionRadius;
+    config.avoidanceStrength = avoidanceStrength;
+    config.densitySlowdown = densitySlowdown;
+
+    configs.push_back(config);
+}
+
 vector<BenchmarkConfig> createDefaultSuite()
 {
     const vector<size_t> agentCounts = {1000, 5000, 10000, 20000, 50000};
@@ -159,6 +191,39 @@ vector<BenchmarkConfig> createHeavyParallelSuite()
     return configs;
 }
 
+vector<BenchmarkConfig> createInteractionSnapshotSuite()
+{
+    const vector<size_t> agentCounts = {10000, 50000, 100000};
+    const vector<size_t> grainSizes = {64, 256, 1024};
+    const vector<float> perceptionRadii = {2.0f, 5.0f, 10.0f};
+    const vector<size_t> workerCounts = {4, 8};
+
+    vector<BenchmarkConfig> configs;
+    configs.reserve(agentCounts.size() * grainSizes.size() * perceptionRadii.size() * 5);
+
+    // This optional suite measures the cost of realistic read-only neighbor
+    // dependencies. Snapshot reads are safe in parallel; direct writes between
+    // agents would create data races and nondeterministic frame results.
+    for (const size_t agentCount : agentCounts)
+    {
+        for (const size_t grainSize : grainSizes)
+        {
+            for (const float perceptionRadius : perceptionRadii)
+            {
+                appendInteractionSnapshotConfig(configs, "Sequential", 1, agentCount, grainSize, perceptionRadius);
+
+                for (const size_t workerCount : workerCounts)
+                {
+                    appendInteractionSnapshotConfig(configs, "ThreadPool", workerCount, agentCount, grainSize, perceptionRadius);
+                    appendInteractionSnapshotConfig(configs, "WorkStealing", workerCount, agentCount, grainSize, perceptionRadius);
+                }
+            }
+        }
+    }
+
+    return configs;
+}
+
 bool shouldSkipBenchmark(const BenchmarkConfig& config)
 {
     return (config.agentCount >= 200000 && config.heavyAgentRatio >= 0.25f && config.heavyWorkIterations >= 25000)
@@ -188,7 +253,15 @@ void logProgress(const BenchmarkConfig& config)
          << "Agents=" << config.agentCount << '\n'
          << "Grain=" << config.grainSize << '\n'
          << "HeavyRatio=" << config.heavyAgentRatio << '\n'
-         << "HeavyIterations=" << config.heavyWorkIterations << "\n\n";
+         << "HeavyIterations=" << config.heavyWorkIterations << '\n';
+
+    if (config.interactionMode != InteractionMode::None)
+    {
+        cout << "InteractionMode=" << toString(config.interactionMode) << '\n'
+             << "PerceptionRadius=" << config.perceptionRadius << '\n';
+    }
+
+    cout << '\n';
 }
 
 BenchmarkResult runBenchmark(const BenchmarkConfig& config)
@@ -206,7 +279,11 @@ BenchmarkResult runBenchmark(const BenchmarkConfig& config)
         scheduler.get(),
         config.grainSize,
         config.heavyAgentRatio,
-        config.heavyWorkIterations
+        config.heavyWorkIterations,
+        config.interactionMode,
+        config.perceptionRadius,
+        config.avoidanceStrength,
+        config.densitySlowdown
     );
     simulation.initialize(config.agentCount);
 
@@ -235,7 +312,11 @@ bool sameDefaultScenario(const BenchmarkConfig& left, const BenchmarkConfig& rig
         && left.grainSize == right.grainSize
         && left.heavyAgentRatio == right.heavyAgentRatio
         && left.heavyWorkIterations == right.heavyWorkIterations
-        && left.benchmarkFrames == right.benchmarkFrames;
+        && left.benchmarkFrames == right.benchmarkFrames
+        && left.interactionMode == right.interactionMode
+        && left.perceptionRadius == right.perceptionRadius
+        && left.avoidanceStrength == right.avoidanceStrength
+        && left.densitySlowdown == right.densitySlowdown;
 }
 
 void runSuite(
@@ -311,13 +392,15 @@ void runSuite(
 int main()
 {
     constexpr bool runDefaultBenchmarks = false;
-    constexpr bool runLightOverheadSuite = true;
-    constexpr bool runHeavyParallelSuite = true;
+    constexpr bool runLightOverheadSuite = false;
+    constexpr bool runHeavyParallelSuite = false;
+    constexpr bool runInteractionSnapshotSuite = true;
 
     vector<BenchmarkConfig> defaultConfigs;
     vector<pair<BenchmarkConfig, BenchmarkResult>> defaultResults;
     vector<pair<BenchmarkConfig, BenchmarkResult>> lightOverheadResults;
     vector<pair<BenchmarkConfig, BenchmarkResult>> heavyParallelResults;
+    vector<pair<BenchmarkConfig, BenchmarkResult>> interactionSnapshotResults;
 
     if (runDefaultBenchmarks)
     {
@@ -352,6 +435,23 @@ int main()
     {
         BenchmarkCSVExporter::exportExtendedResults("benchmark_results_heavy_parallel.csv", heavyParallelResults);
         cout << "[Benchmark] Exported benchmark_results_heavy_parallel.csv with " << heavyParallelResults.size() << " rows\n";
+    }
+
+    if (runInteractionSnapshotSuite)
+    {
+        vector<BenchmarkConfig> interactionSnapshotConfigs = createInteractionSnapshotSuite();
+        interactionSnapshotResults.reserve(interactionSnapshotConfigs.size());
+        runSuite(interactionSnapshotConfigs, interactionSnapshotResults);
+    }
+
+    if (!interactionSnapshotResults.empty())
+    {
+        BenchmarkCSVExporter::exportInteractionSnapshotResults(
+            "benchmark_results_interaction_snapshot.csv",
+            interactionSnapshotResults
+        );
+        cout << "[Benchmark] Exported benchmark_results_interaction_snapshot.csv with "
+             << interactionSnapshotResults.size() << " rows\n";
     }
 
     // cout << "[Benchmark] Exported benchmark_results.csv with " << defaultResults.size() << " rows\n";

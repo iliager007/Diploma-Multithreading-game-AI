@@ -1,5 +1,7 @@
 #pragma once
 
+#include "InteractionMode.h"
+
 #include <cstddef>
 #include <string>
 
@@ -21,6 +23,11 @@ struct BenchmarkConfig
     int benchmarkFrames;
 
     string suiteName = "default";
+
+    InteractionMode interactionMode = InteractionMode::None;
+    float perceptionRadius = 5.0f;
+    float avoidanceStrength = 1.0f;
+    float densitySlowdown = 0.05f;
 };
 
 // Timing plus scalability metrics for one benchmark run.

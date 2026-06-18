@@ -1,8 +1,11 @@
 #include "Agent.h"
+#include "WorldSnapshot.h"
 
+#include <algorithm>
 #include <cmath>
 #include <random>
 
+using std::max;
 using std::sqrt;
 using std::mt19937;
 using std::sin;
@@ -51,6 +54,72 @@ void Agent::update(float deltaTime, float speed, float worldWidth, float worldHe
 
     x += normalizedX * movement;
     y += normalizedY * movement;
+}
+
+void Agent::update(
+    float deltaTime,
+    float speed,
+    float worldWidth,
+    float worldHeight,
+    const WorldSnapshot& snapshot,
+    size_t agentIndex,
+    float perceptionRadius,
+    float avoidanceStrength,
+    float densitySlowdown,
+    int heavyWorkIterations
+)
+{
+    if (isHeavyAgent)
+    {
+        runHeavyWork(heavyWorkIterations);
+    }
+
+    const float toTargetX = targetX - x;
+    const float toTargetY = targetY - y;
+    const float targetDistance = sqrt(toTargetX * toTargetX + toTargetY * toTargetY);
+    constexpr float epsilon = 0.1f;
+
+    if (targetDistance <= epsilon)
+    {
+        assignRandomTarget(worldWidth, worldHeight);
+        return;
+    }
+
+    const float normalizedTargetX = toTargetX / targetDistance;
+    const float normalizedTargetY = toTargetY / targetDistance;
+
+    const int neighborCount = snapshot.countNeighbors(agentIndex, perceptionRadius);
+    const Vec2 avoidance = snapshot.computeAvoidanceVector(agentIndex, perceptionRadius);
+
+    float desiredX = normalizedTargetX + avoidanceStrength * avoidance.x;
+    float desiredY = normalizedTargetY + avoidanceStrength * avoidance.y;
+    const float desiredLength = sqrt(desiredX * desiredX + desiredY * desiredY);
+
+    if (desiredLength > 0.000001f)
+    {
+        desiredX /= desiredLength;
+        desiredY /= desiredLength;
+    }
+    else
+    {
+        desiredX = normalizedTargetX;
+        desiredY = normalizedTargetY;
+    }
+
+    const float slowdown = max(0.0f, densitySlowdown);
+    const float speedFactor = 1.0f / (1.0f + slowdown * static_cast<float>(neighborCount));
+    const float movement = speed * speedFactor * deltaTime;
+
+    if (movement >= targetDistance)
+    {
+        x = targetX;
+        y = targetY;
+        assignRandomTarget(worldWidth, worldHeight);
+        return;
+    }
+
+    x += desiredX * movement;
+    y += desiredY * movement;
 }
 
 void Agent::runHeavyWork(int iterations) const

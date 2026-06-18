@@ -11,6 +11,7 @@ add_executable(NpcSimulation
     BenchmarkCSVExporter.cpp
     Agent.cpp
     World.cpp
+    WorldSnapshot.cpp
     Simulation.cpp
     SequentialScheduler.cpp
     ThreadPoolScheduler.cpp

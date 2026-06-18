@@ -76,3 +76,41 @@ void BenchmarkCSVExporter::exportExtendedResults(
              << result.throughputAgentsPerSec << '\n';
     }
 }
+
+void BenchmarkCSVExporter::exportInteractionSnapshotResults(
+    const string& filename,
+    const vector<pair<BenchmarkConfig, BenchmarkResult>>& results
+)
+{
+    ofstream file(filename);
+
+    if (!file)
+    {
+        throw runtime_error("Failed to open interaction snapshot benchmark CSV file.");
+    }
+
+    file << setprecision(10);
+    file << "Suite,Scheduler,Threads,Agents,GrainSize,InteractionMode,PerceptionRadius,"
+         << "AvoidanceStrength,DensitySlowdown,Frames,AvgFrameMs,MinFrameMs,MaxFrameMs,"
+         << "Speedup,Efficiency,ThroughputAgentsPerSec\n";
+
+    for (const auto& [config, result] : results)
+    {
+        file << config.suiteName << ','
+             << config.schedulerName << ','
+             << config.workerCount << ','
+             << config.agentCount << ','
+             << config.grainSize << ','
+             << toString(config.interactionMode) << ','
+             << config.perceptionRadius << ','
+             << config.avoidanceStrength << ','
+             << config.densitySlowdown << ','
+             << config.benchmarkFrames << ','
+             << result.averageFrameTimeMs << ','
+             << result.minFrameTimeMs << ','
+             << result.maxFrameTimeMs << ','
+             << result.speedup << ','
+             << result.efficiency << ','
+             << result.throughputAgentsPerSec << '\n';
+    }
+}

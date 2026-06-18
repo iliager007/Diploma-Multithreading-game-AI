@@ -1,8 +1,10 @@
 #pragma once
 
 #include "BenchmarkTypes.h"
+#include "InteractionMode.h"
 #include "IScheduler.h"
 #include "World.h"
+#include "WorldSnapshot.h"
 
 #include <cstddef>
 #include <random>
@@ -20,7 +22,11 @@ public:
         IScheduler* scheduler,
         size_t grainSize,
         float heavyAgentRatio,
-        int heavyWorkIterations
+        int heavyWorkIterations,
+        InteractionMode interactionMode = InteractionMode::None,
+        float perceptionRadius = 5.0f,
+        float avoidanceStrength = 1.0f,
+        float densitySlowdown = 0.05f
     );
 
     // Initializes world state using a fixed-seed random generator.
@@ -45,5 +51,10 @@ private:
     size_t grainSize;
     float heavyAgentRatio;
     int heavyWorkIterations;
+    InteractionMode interactionMode;
+    float perceptionRadius;
+    float avoidanceStrength;
+    float densitySlowdown;
+    WorldSnapshot snapshot;
     mt19937 rng;
 };

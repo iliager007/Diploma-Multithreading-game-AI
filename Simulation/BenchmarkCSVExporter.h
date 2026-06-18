@@ -23,4 +23,9 @@ public:
         const string& filename,
         const vector<pair<BenchmarkConfig, BenchmarkResult>>& results
     );
+
+    static void exportInteractionSnapshotResults(
+        const string& filename,
+        const vector<pair<BenchmarkConfig, BenchmarkResult>>& results
+    );
 };

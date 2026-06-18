@@ -22,13 +22,21 @@ Simulation::Simulation(
     IScheduler* scheduler,
     size_t grainSize,
     float heavyAgentRatio,
-    int heavyWorkIterations
+    int heavyWorkIterations,
+    InteractionMode interactionMode,
+    float perceptionRadius,
+    float avoidanceStrength,
+    float densitySlowdown
 )
     : world(worldWidth, worldHeight),
       scheduler(scheduler),
       grainSize(grainSize == 0 ? 1 : grainSize),
       heavyAgentRatio(clamp(heavyAgentRatio, 0.0f, 1.0f)),
       heavyWorkIterations(heavyWorkIterations < 0 ? 0 : heavyWorkIterations),
+      interactionMode(interactionMode),
+      perceptionRadius(perceptionRadius > 0.0f ? perceptionRadius : 5.0f),
+      avoidanceStrength(avoidanceStrength),
+      densitySlowdown(densitySlowdown < 0.0f ? 0.0f : densitySlowdown),
       rng(42)
 {
     if (scheduler == nullptr)
@@ -70,10 +78,41 @@ void Simulation::updateAgents(float deltaTime, float speed)
     const float worldWidth = world.getWidth();
     const float worldHeight = world.getHeight();
 
+    if (interactionMode == InteractionMode::None)
+    {
+        scheduler->parallelFor(0, agents.size(), grainSize, [&](size_t start, size_t end) {
+            for (size_t i = start; i < end; ++i)
+            {
+                agents[i].update(deltaTime, speed, worldWidth, worldHeight, heavyWorkIterations);
+            }
+        });
+
+        return;
+    }
+
+    // Snapshot mode captures immutable positions at the beginning of the frame.
+    // Direct inter-agent writes during parallel update would be unsafe because
+    // two workers could update the same Agent concurrently. Reading a snapshot
+    // and writing only agents[i] avoids those races without per-agent locks.
+    // Snapshot construction is timed as part of the frame because neighbor
+    // visibility is part of the interaction update cost.
+    snapshot.build(agents, worldWidth, worldHeight, perceptionRadius);
+
     scheduler->parallelFor(0, agents.size(), grainSize, [&](size_t start, size_t end) {
         for (size_t i = start; i < end; ++i)
         {
-            agents[i].update(deltaTime, speed, worldWidth, worldHeight, heavyWorkIterations);
+            agents[i].update(
+                deltaTime,
+                speed,
+                worldWidth,
+                worldHeight,
+                snapshot,
+                i,
+                perceptionRadius,
+                avoidanceStrength,
+                densitySlowdown,
+                heavyWorkIterations
+            );
         }
     });
 }
